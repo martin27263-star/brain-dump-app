@@ -24,20 +24,11 @@
     };
     const ICONS = {Tasks:"✅",Ideas:"💡",Worries:"😟",Notes:"📝"};
 
-async function callClaude(system, user) {
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ system, user })
-  });
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body: JSON.stringify({
-          model:"claude-sonnet-4-20250514",
-          max_tokens:1000,
-          system,
-          messages:[{role:"user",content:user}]
-        })
+    async function callClaude(system, user) {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ system, user })
       });
       const data = await res.json();
       return data.content?.[0]?.text || "";
@@ -67,7 +58,7 @@ async function callClaude(system, user) {
 {"Tasks":["..."],"Ideas":["..."],"Worries":["..."],"Notes":["..."]}
 Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/reminders.`;
           const raw = await callClaude(sys, `Sort this:\n${dumpText}`);
-          const parsed = JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g,"").trim());
+          const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
           setSorted(p=>({
             Tasks:[...p.Tasks,...(parsed.Tasks||[])],
             Ideas:[...p.Ideas,...(parsed.Ideas||[])],
@@ -76,7 +67,7 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
           }));
           setAllDumps(p=>[...p,{text:dumpText,date:new Date().toLocaleDateString(),parsed}]);
           setDumpText(""); showToast("✨ Sorted!"); setTab("Tasks");
-        } catch { showToast("⚠️ Try again."); }
+        } catch(e) { showToast("⚠️ Try again. Error: " + e.message); }
         setLoading(false);
       }
 
@@ -87,9 +78,9 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
         try {
           const sys = `Pick the 3 most important tasks. Return ONLY valid JSON: {"daily3":["task1","task2","task3"]}`;
           const raw = await callClaude(sys,`Tasks: ${JSON.stringify(tasks)}`);
-          const parsed = JSON.parse(raw.replace(/\`\`\`json|\`\`\`/g,"").trim());
+          const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
           setDaily3(parsed.daily3||[]); showToast("🎯 Daily 3 ready!");
-        } catch { showToast("⚠️ Try again."); }
+        } catch(e) { showToast("⚠️ Try again. Error: " + e.message); }
         setD3Loading(false);
       }
 
@@ -100,7 +91,7 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
           const sys = `You are a productivity coach. Write a warm weekly review under 300 words. Include themes, progress, recurring worries, top ideas, and 3 suggestions. Use emojis.`;
           const txt = await callClaude(sys,`Brain dumps: ${JSON.stringify(allDumps)}`);
           setWeeklyReview(txt);
-        } catch { showToast("⚠️ Try again."); }
+        } catch(e) { showToast("⚠️ Try again. Error: " + e.message); }
         setReviewLoading(false);
       }
 
@@ -116,7 +107,6 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
 
       return (
         <div style={{fontFamily:"'Segoe UI',sans-serif",background:"#F8FAFC",minHeight:"100vh"}}>
-          {/* Header */}
           <div style={{background:"#fff",borderBottom:"1px solid #E2E8F0",padding:"14px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:10}}>
             <div style={{display:"flex",alignItems:"center",gap:10}}>
               <div style={{width:34,height:34,background:"linear-gradient(135deg,#6366F1,#8B5CF6)",borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>🧠</div>
@@ -128,10 +118,8 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
             {total>0 && <div style={{background:"#EEF2FF",color:"#6366F1",borderRadius:20,padding:"3px 12px",fontSize:13,fontWeight:600}}>{total} items</div>}
           </div>
 
-          {/* Toast */}
           {toast && <div style={{position:"fixed",top:76,left:"50%",transform:"translateX(-50%)",background:"#1E293B",color:"#fff",padding:"9px 20px",borderRadius:30,fontSize:13,fontWeight:500,zIndex:100,boxShadow:"0 4px 20px rgba(0,0,0,0.15)"}}>{toast}</div>}
 
-          {/* Tabs */}
           <div style={{background:"#fff",borderBottom:"1px solid #E2E8F0",padding:"0 12px",display:"flex",gap:2,overflowX:"auto"}}>
             {TABS.map(t=>(
               <button key={t} onClick={()=>setTab(t)} style={{padding:"11px 14px",border:"none",background:"none",cursor:"pointer",fontSize:12,fontWeight:tab===t?700:500,color:tab===t?"#6366F1":"#64748B",borderBottom:tab===t?"2px solid #6366F1":"2px solid transparent",whiteSpace:"nowrap"}}>{t}</button>
@@ -140,7 +128,6 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
 
           <div style={{maxWidth:680,margin:"0 auto",padding:"22px 16px"}}>
 
-            {/* DUMP */}
             {tab==="Dump" && (
               <div>
                 <h2 style={{fontSize:20,fontWeight:700,margin:"0 0 4px"}}>What's on your mind? 🌪️</h2>
@@ -163,7 +150,6 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
               </div>
             )}
 
-            {/* CATEGORIES */}
             {["Tasks","Ideas","Worries","Notes"].includes(tab) && (
               <div>
                 <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
@@ -189,7 +175,6 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
               </div>
             )}
 
-            {/* DAILY 3 */}
             {tab==="Daily 3" && (
               <div>
                 <h2 style={{fontSize:20,fontWeight:700,margin:"0 0 4px"}}>🎯 Your Daily 3</h2>
@@ -198,7 +183,7 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
                   {d3Loading?"🤔 Choosing...":"✨ Generate Daily 3"}
                 </button>
                 {daily3.length>0?daily3.map((task,i)=>(
-                  <div key={i} style={{background:"#fff",border:"2px solid #6366F1",borderRadius:14,padding:"16px",display:"flex",gap:12,alignItems:"flex-start",marginBottom:12,boxShadow:"0 2px 12px rgba(99,102,241,0.08)"}}>
+                  <div key={i} style={{background:"#fff",border:"2px solid #6366F1",borderRadius:14,padding:"16px",display:"flex",gap:12,alignItems:"flex-start",marginBottom:12}}>
                     <div style={{width:30,height:30,background:"linear-gradient(135deg,#6366F1,#8B5CF6)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontWeight:800,fontSize:13,flexShrink:0}}>{i+1}</div>
                     <div style={{fontSize:14,fontWeight:600,lineHeight:1.5}}>{task}</div>
                   </div>
@@ -211,7 +196,6 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
               </div>
             )}
 
-            {/* WEEKLY REVIEW */}
             {tab==="Weekly Review" && (
               <div>
                 <h2 style={{fontSize:20,fontWeight:700,margin:"0 0 4px"}}>📊 Weekly Review</h2>
@@ -228,7 +212,7 @@ Tasks=actionable, Ideas=creative thoughts, Worries=concerns/fears, Notes=facts/r
                   {reviewLoading?"🤔 Analysing...":"📊 Generate Weekly Review"}
                 </button>
                 {weeklyReview?(
-                  <div style={{background:"#fff",border:"1px solid #E2E8F0",borderRadius:14,padding:"20px",lineHeight:1.8,fontSize:14,whiteSpace:"pre-wrap",boxShadow:"0 2px 12px rgba(0,0,0,0.04)"}}>{weeklyReview}</div>
+                  <div style={{background:"#fff",border:"1px solid #E2E8F0",borderRadius:14,padding:"20px",lineHeight:1.8,fontSize:14,whiteSpace:"pre-wrap"}}>{weeklyReview}</div>
                 ):(
                   <div style={{textAlign:"center",padding:"40px 20px",color:"#94A3B8"}}>
                     <div style={{fontSize:44,marginBottom:10}}>📊</div>
